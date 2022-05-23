@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: testserver
+  namespace: argocd
+spec:
+  destination:
+    namespace: testserver
+    server: https://kubernetes.default.svc
+  project: test
+  source:
+    chart: testserver
+    helm:
+      parameters:
+      - name: env[0].value
+        value: TestArgoCDSecret
+      valueFiles:
+      - values.yaml
+    repoURL: https://gitlab.com/cgerull-orchestration/helm/deploy-testserver.git
+    targetRevision: 0.1.0

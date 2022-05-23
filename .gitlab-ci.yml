@@ -1,0 +1,132 @@
+variables:
+  CHART: testserver
+  SCRIPTS_REPO: https://$SCRIPTS_USER:$SCRIPTS_TOKEN@gitlab.com/cgerull-orchestration/ci-scripts
+  YQ_VERSION: v4.24.2
+  YQ_BINARY: yq_linux_amd64
+before_script:
+  - export SCRIPTS_DIR=$(mktemp -d)
+  - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
+  - "[ -f ./version ] && export VERSION=$(cat ./version)"
+
+# default:
+#   tags:
+#     - linux
+
+stages:
+  - prepare
+  - build
+  - test
+  - publish
+  - deploy
+
+version:
+  image: python:3.7-stretch
+  stage: prepare
+  script:
+    - pip install semver
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan gitlab.com >> ~/.ssh/known_hosts && chmod 644 ~/.ssh/known_hosts
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - $SCRIPTS_DIR/common/gen-semver.py > version
+  artifacts:
+    paths:
+      - version
+  only:
+    refs:
+      - merge_requests
+      # - branches
+
+# environment:
+#   stage: prepare
+#   script:
+#     - env | sort
+
+
+build-chart-package:
+  stage: build
+  variables:
+    CHART: testserver
+  script:
+    - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    - curl -L https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/${YQ_BINARY}.tar.gz > ${YQ_BINARY}.tar.gz
+    - tar -zxf ${YQ_BINARY}.tar.gz
+    - chmod +x ${YQ_BINARY} && mv ${YQ_BINARY} /usr/bin/yq
+    - ${SCRIPTS_DIR}/build/build-helm-package.sh ${CHART} ${CI_PIPELINE_IID}
+  only:
+    changes:
+      - charts/*
+  artifacts:
+    paths:
+    - ${CHART}-*.tgz
+    expire_in: 1 week
+
+generate-manifests:
+  stage: build
+  variables:
+    MANIFEST_FOLDER: kubernetes
+  script:
+    - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    - ${SCRIPTS_DIR}/build/generate-kubernetes-manifests.sh ${CHART} all
+    - ${SCRIPTS_DIR}/common/push-back.sh "${CI_REPOSITORY_URL}" "${MANIFEST_FOLDER}" "${CI_BUILD_REF_NAME}" "${SSH_PRIVATE_KEY}"
+  only:
+    changes:
+      - charts/*
+
+
+
+test-manifests:
+  stage: "test"
+  script:
+    - ${SCRIPTS_DIR}/test/test-kubernetes-manifests.sh ${CHART} dev
+  only:
+    changes:
+      - kubernetes/*
+
+publish-helm-chart:
+  variables:
+    CHANNEL: "stable"
+  needs:
+    - build-chart-package
+  # Override before_script, no common scripts needed here
+  before_script:
+    - ''
+  image: curlimages/curl:latest
+  stage: publish
+  script:
+    - |
+      for file in $(ls ${CHART}-*.tgz); do
+        echo "Upload ${file} to ${CI_API_V4_URL}"
+        curl --request POST --user gitlab-ci-token:$CI_JOB_TOKEN --form "chart=@${file}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/api/${CHANNEL}/charts"
+      done
+  only:
+    refs:
+      - merge_requests
+    changes:
+      - charts/*
+
+generate-deployments-dev:
+  stage: deploy
+  variables:
+    MANIFEST_FOLDER: kubernetes
+  script:
+    - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    - ${SCRIPTS_DIR}/build/generate-deployments.sh ${CHART} dev
+    # - ${SCRIPTS_DIR}/common/push-back.sh "${CI_REPOSITORY_URL}" "${MANIFEST_FOLDER}" "${CI_BUILD_REF_NAME}" "${SSH_PRIVATE_KEY}"
+  only:
+    changes:
+      - deploy/dev/*
+    
+generate-deployments:
+  stage: deploy
+  variables:
+    MANIFEST_FOLDER: kubernetes
+  script:
+    - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    - ${SCRIPTS_DIR}/build/generate-deployments.sh ${CHART} all
+    # - ${SCRIPTS_DIR}/common/push-back.sh "${CI_REPOSITORY_URL}" "${MANIFEST_FOLDER}" "${CI_BUILD_REF_NAME}" "${SSH_PRIVATE_KEY}"
+  only:
+    refs:
+      - merge_requests
+    changes:
+      - deploy/*

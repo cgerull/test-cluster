@@ -1,0 +1,22 @@
+apiVersion: v1
+items:
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    name: testserver
+    namespace: argocd
+  spec:
+    project: default
+    destination:
+      namespace: dev-environment
+      server: https://kubernetes.default.svc
+    source:
+      path: kubernetes/dev
+      repoURL: https://github.com/cgerull/deploy-test-server
+      targetRevision: main
+    syncPolicy:
+      automated: {}
+kind: List
+metadata:
+  resourceVersion: ""
+  selfLink: ""

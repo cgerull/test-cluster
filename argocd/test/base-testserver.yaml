@@ -1,0 +1,14 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: base-testserver
+  namespace: argocd
+spec:
+  destination:
+    namespace: base-testserver
+    server: https://kubernetes.default.svc
+  project: sse-test
+  source:
+    path: kubernetes/sse-test
+    repoURL: https://gitlab.com/cgerull-orchestration/helm/deploy-testserver.git
+    targetRevision: optimize-for-argocd

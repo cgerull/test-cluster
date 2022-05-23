@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd.argoproj.io/manifest-generate-paths: .
+  name: tp-dev
+  namespace: klz-platform
+spec:
+  destination:
+    namespace: testsuite
+    server: https://kubernetes.default.svc
+  ignoreDifferences:
+  - group: apps
+    jsonPointers:
+    - /metadata/generation
+    - /metadata/annotations
+    kind: Deployment
+  project: dev
+  source:
+    path: kubernetes/dev
+    repoURL: https://github.com/cgerull/deploy-test-server
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+    - ApplyOutOfSyncOnly=true
+    - CreateNamespace=false

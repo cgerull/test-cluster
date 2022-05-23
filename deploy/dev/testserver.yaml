@@ -1,0 +1,32 @@
+# Dev configuaration
+#
+image:
+  tag: 0.9.3
+  
+replicaCount: 1
+
+env:
+  - name: SECRET_KEY
+    value: DevHelmChartSecret
+  - name: FLASK_ENV
+    value: 'Dev'
+  - name: REDIS_PASSWORD
+    value: cEPguKSbSp
+  - name: REDIS_SERVER
+    value: redis
+
+ingress:
+  enabled: true
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    # traefik.ingress.kubernetes.io/router.middlewares: testserver-testserver-stripprefix@kubernetescrd
+  hosts:
+    - host: testserver.local
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: testserver
+              port:
+                number: 80

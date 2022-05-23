@@ -1,5 +1,5 @@
 ---
-# Source: vault/templates/injector-serviceaccount.yaml
+# Source: vault/charts/vault/templates/injector-serviceaccount.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/instance: vault
     app.kubernetes.io/managed-by: Helm
 ---
-# Source: vault/templates/server-serviceaccount.yaml
+# Source: vault/charts/vault/templates/server-serviceaccount.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -22,7 +22,42 @@ metadata:
     app.kubernetes.io/instance: vault
     app.kubernetes.io/managed-by: Helm
 ---
-# Source: vault/templates/injector-clusterrole.yaml
+# Source: vault/charts/vault/templates/server-config-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-config
+  namespace: vault
+  labels:
+    helm.sh/chart: vault-0.19.0
+    app.kubernetes.io/name: vault
+    app.kubernetes.io/instance: vault
+    app.kubernetes.io/managed-by: Helm
+data:
+  extraconfig-from-values.hcl: |-
+    disable_mlock = true
+    ui = true
+    
+    listener "tcp" {
+      tls_disable = 1
+      address = "[::]:8200"
+      cluster_address = "[::]:8201"
+    }
+    storage "file" {
+      path = "/vault/data"
+    }
+    
+    # Example configuration for using auto-unseal, using Google Cloud KMS. The
+    # GKMS keys must already exist, and the cluster must have a service account
+    # that is authorized to access GCP KMS.
+    #seal "gcpckms" {
+    #   project     = "vault-helm-dev"
+    #   region      = "global"
+    #   key_ring    = "vault-helm-unseal-kr"
+    #   crypto_key  = "vault-helm-unseal-key"
+    #}
+---
+# Source: vault/charts/vault/templates/injector-clusterrole.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -40,7 +75,7 @@ rules:
     - "watch"
     - "patch"
 ---
-# Source: vault/templates/injector-clusterrolebinding.yaml
+# Source: vault/charts/vault/templates/injector-clusterrolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -58,7 +93,7 @@ subjects:
   name: vault-agent-injector
   namespace: vault
 ---
-# Source: vault/templates/server-clusterrolebinding.yaml
+# Source: vault/charts/vault/templates/server-clusterrolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -77,7 +112,7 @@ subjects:
   name: vault
   namespace: vault
 ---
-# Source: vault/templates/injector-service.yaml
+# Source: vault/charts/vault/templates/injector-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -98,7 +133,7 @@ spec:
     app.kubernetes.io/instance: vault
     component: webhook
 ---
-# Source: vault/templates/server-headless-service.yaml
+# Source: vault/charts/vault/templates/server-headless-service.yaml
 # Service for Vault cluster
 apiVersion: v1
 kind: Service
@@ -127,7 +162,7 @@ spec:
     app.kubernetes.io/instance: vault
     component: server
 ---
-# Source: vault/templates/server-service.yaml
+# Source: vault/charts/vault/templates/server-service.yaml
 # Service for Vault cluster
 apiVersion: v1
 kind: Service
@@ -157,7 +192,7 @@ spec:
     app.kubernetes.io/instance: vault
     component: server
 ---
-# Source: vault/templates/injector-deployment.yaml
+# Source: vault/charts/vault/templates/injector-deployment.yaml
 # Deployment for the injector
 apiVersion: apps/v1
 kind: Deployment
@@ -270,7 +305,7 @@ spec:
             successThreshold: 1
             timeoutSeconds: 5
 ---
-# Source: vault/templates/server-statefulset.yaml
+# Source: vault/charts/vault/templates/server-statefulset.yaml
 # StatefulSet to run the actual vault server cluster.
 apiVersion: apps/v1
 kind: StatefulSet
@@ -301,6 +336,16 @@ spec:
         component: server
     spec:
       
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: vault
+                  app.kubernetes.io/instance: "vault"
+                  component: server
+              topologyKey: kubernetes.io/hostname
+  
       
       
       terminationGracePeriodSeconds: 10
@@ -313,6 +358,10 @@ spec:
         fsGroup: 1000
       volumes:
         
+        - name: config
+          configMap:
+            name: vault-config
+  
         - name: home
           emptyDir: {}
       containers:
@@ -325,8 +374,15 @@ spec:
           - "-ec"
           args: 
           - |
-            /usr/local/bin/docker-entrypoint.sh vault server -dev 
-  
+            cp /vault/config/extraconfig-from-values.hcl /tmp/storageconfig.hcl;
+            [ -n "${HOST_IP}" ] && sed -Ei "s|HOST_IP|${HOST_IP?}|g" /tmp/storageconfig.hcl;
+            [ -n "${POD_IP}" ] && sed -Ei "s|POD_IP|${POD_IP?}|g" /tmp/storageconfig.hcl;
+            [ -n "${HOSTNAME}" ] && sed -Ei "s|HOSTNAME|${HOSTNAME?}|g" /tmp/storageconfig.hcl;
+            [ -n "${API_ADDR}" ] && sed -Ei "s|API_ADDR|${API_ADDR?}|g" /tmp/storageconfig.hcl;
+            [ -n "${TRANSIT_ADDR}" ] && sed -Ei "s|TRANSIT_ADDR|${TRANSIT_ADDR?}|g" /tmp/storageconfig.hcl;
+            [ -n "${RAFT_ADDR}" ] && sed -Ei "s|RAFT_ADDR|${RAFT_ADDR?}|g" /tmp/storageconfig.hcl;
+            /usr/local/bin/docker-entrypoint.sh vault server -config=/tmp/storageconfig.hcl 
+   
           securityContext:
             allowPrivilegeEscalation: false
           env:
@@ -363,16 +419,19 @@ spec:
             - name: HOME
               value: "/home/vault"
             
-            - name: VAULT_DEV_ROOT_TOKEN_ID
-              value: root
-            - name: VAULT_DEV_LISTEN_ADDRESS
-              value: "[::]:8200"
-  
             
             
           volumeMounts:
           
   
+    
+            - name: data
+              mountPath: /vault/data
+    
+  
+  
+            - name: config
+              mountPath: /vault/config
   
             - name: home
               mountPath: /home/vault
@@ -410,8 +469,20 @@ spec:
                   # to this pod while it's terminating
                   "sleep 5 && kill -SIGTERM $(pidof vault)",
                 ]
+      
+  
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
 ---
-# Source: vault/templates/injector-mutating-webhook.yaml
+# Source: vault/charts/vault/templates/injector-mutating-webhook.yaml
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
@@ -439,7 +510,7 @@ webhooks:
         resources: ["pods"]
     failurePolicy: Ignore
 ---
-# Source: vault/templates/tests/server-test.yaml
+# Source: vault/charts/vault/templates/tests/server-test.yaml
 apiVersion: v1
 kind: Pod
 metadata:

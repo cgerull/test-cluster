@@ -1,0 +1,17 @@
+vault:
+  enabled: true
+
+  # auth:
+  #   # -- Specify the secret to use for database credentials
+  #   existingSecret: mysql
+
+  # image:
+  #   tag: 5.7.35-debian-10-r33
+
+  networkPolicy:
+    create: false
+
+    # -- Add additional Cilium CNP statements.
+    cilium:
+      ingress: {}
+      egress: {}

@@ -1,0 +1,10 @@
+apiVersion: v2
+name: vault
+description: Umbrella chart for hashicorp vault services
+type: application
+version: 0.1.0
+dependencies:
+  - name: vault
+    repository: https://helm.releases.hashicorp.com
+    version: ~0.19
+    condition: vault.enabled

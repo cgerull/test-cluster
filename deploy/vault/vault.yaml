@@ -1,3 +1,29 @@
 server:
   dev:
     enabled: true
+
+  networkPolicy:
+    create: true
+
+    cilium:
+      ingress:
+        CIDRSets:
+        - cidrs:
+            - "100.65.0.0/16"
+          ports:
+            - "8080"
+      Endpoints:
+        - labels:
+            - vault
+          ports:
+            - "8200"
+        - labels:
+            - vault-internal
+          ports:
+            - "8201"
+        - labels:
+            - vault-agent-injector
+          ports:
+            - "8080"
+
+      egress: {}

@@ -1,5 +1,5 @@
-{{- if .Values.vault.enabled }}
-{{- if .Values.vault.networkPolicy.create -}}
+---
+{{- if .Values.networkPolicy.create -}}
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -9,18 +9,18 @@ spec:
     matchLabels:
       app.kubernetes.io/name: vault
   ingress:
-    {{- if or (eq (.Values.global.environment | lower) "development") (eq (.Values.global.environment | lower) "test") }}
+    {{- if or (eq (.Values.environment | lower) "development") (eq (.Values.environment | lower) "test") }}
     # - fromEndpoints:
     #     - matchLabels:
     #         io.kubernetes.pod.namespace: tp-gitlab-runner
-    {{- end }}
     - fromEndpoints:
         - {}
       toPorts:
         - ports:
             - port: "8200"
-    {{- if .Values.vault.networkPolicy.cilium.ingress }}
-    {{- range .Values.vault.networkPolicy.cilium.ingress.Endpoints }}
+    {{- end }}
+    {{- if .Values.networkPolicy.cilium.ingress }}
+    {{- range .Values.networkPolicy.cilium.ingress.Endpoints }}
     - fromEndpoints:
         {{- range .labels }}
         - matchLabels:
@@ -35,5 +35,4 @@ spec:
     {{- end }}
   egress:
     - {}
-{{- end -}}
 {{- end -}}

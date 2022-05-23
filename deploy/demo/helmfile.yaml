@@ -2,20 +2,10 @@ repositories:
   # To use official "stable" charts a.k.a https://github.com/helm/charts/tree/master/stable
   - name: stable
     url: https://charts.helm.sh/stable
-  - name: hashicorp
-    url: https://helm.releases.hashicorp.com
   - name: bitnami
     url: https://charts.bitnami.com/bitnami
 
 releases:
-  # Published chart example
-  - name: vault
-    namespace: vault
-    chart: hashicorp/vault
-    version: ~0.19
-    values:
-      - vault.yaml
-
   - name: testserver
     namespace: testserver
     chart: ../../charts/testserver

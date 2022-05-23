@@ -1,0 +1,19 @@
+{{- if and .Values.ingress.enabled .Values.ingress.traefikStripPrefix }}
+{{/*
+Needs also an annotation in the ingress manifest
+traefik.ingress.kubernetes.io/router.middlewares: <namespace>-<service>-stripprefix@kubernetescrd
+*/}}
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "testserver.name" . }}-stripprefix
+spec:
+  stripPrefix:
+    forceSlash: false
+    prefixes:
+    {{- range .Values.ingress.hosts }}
+      {{- range .paths }}
+        - "{{ .path }}"
+      {{- end }}
+    {{- end }}
+{{- end }}

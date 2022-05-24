@@ -17,6 +17,8 @@ releases:
     namespace: testserver 
     chart: bitnami/redis
     version: ~16.9
+    values:
+      - redis.yaml
 
 
 

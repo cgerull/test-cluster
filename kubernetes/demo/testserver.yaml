@@ -124,6 +124,52 @@ spec:
                 name: testserver
                 port:
                   number: 80
+---
+# Source: testserver/templates/cnp.yaml
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: testserver
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: testserver
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: map[app.kubernetes.io/name:testserver]
+      toPorts:
+        - ports:
+            - port: "80"
+  egress:
+    - toFQDNs:
+        - matchName: mysql.gerull.nl
+      toPorts:
+        - ports:
+            - port: "3306"
+    - toFQDNs:
+        - matchName: galaxy.ansible.com
+        - matchName: ansible-galaxy.s3.amazonaws.com
+      toPorts:
+        - ports:
+            - port: "443"
+    - toCIDRSet:
+        - cidr: 10.27.31.128/32
+      toPorts:
+        - ports:
+            - port: "5671"
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: map[k8s:app:redis]
+      toPorts:
+        - ports:
+            - port: "8080"
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: map[k8s:app:vault-agent-injector k8s:io.kubernetes.pod.namespace:vault]
+      toPorts:
+        - ports:
+            - port: "8080"
 
 ---
 # Source: redis/templates/serviceaccount.yaml
@@ -152,7 +198,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 data:
-  redis-password: "U1o5NE9LaE9LOA=="
+  redis-password: "UUo2ak5MY1Rxbg=="
 ---
 # Source: redis/templates/configmap.yaml
 apiVersion: v1
@@ -483,7 +529,7 @@ spec:
         checksum/configmap: 89ed653831dd201afbae589c7b2692559819e8383e81ab02fa0c98cb548830f4
         checksum/health: 37be6b559e6f84163c8e650052e9c922f1480ef5437a94377a5e738f0c5c00ce
         checksum/scripts: 7244075b4888a47c1f3078b2bb15db29cade36c7cf411212af78ea71c2f9dd62
-        checksum/secret: b93884bc3f30cd3448122ca8666f012d6295476fbe2baae0f5c896ef8267a2b4
+        checksum/secret: acab6a13fa79811765476abcf5312adfe8c6e73d01b53d659f895fe178b31cc6
     spec:
       
       securityContext:
@@ -642,7 +688,7 @@ spec:
         checksum/configmap: 89ed653831dd201afbae589c7b2692559819e8383e81ab02fa0c98cb548830f4
         checksum/health: 37be6b559e6f84163c8e650052e9c922f1480ef5437a94377a5e738f0c5c00ce
         checksum/scripts: 7244075b4888a47c1f3078b2bb15db29cade36c7cf411212af78ea71c2f9dd62
-        checksum/secret: 4637f16b8b3279965792fffcb4f571a170cbb477edcdd347c73d90897be76c80
+        checksum/secret: a5ed4a201bd2ed4fe240c5e5e68a79aae93179fd1acc3b5d228d2349df384204
     spec:
       
       securityContext:

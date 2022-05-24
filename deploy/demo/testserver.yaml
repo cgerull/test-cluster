@@ -1,5 +1,7 @@
 # Dev configuaration
 #
+environment: demo
+
 image:
   tag: 0.9.3
   
@@ -35,3 +37,41 @@ ingress:
               name: testserver
               port:
                 number: 80
+
+networkPolicy:
+  create: true
+
+  cilium:
+        ingress:
+          Endpoints:
+            - labels:
+                - app.kubernetes.io/name: testserver
+              ports:
+                - 80
+
+        egress:
+          CIDRSets:
+            - cidrs:
+                - "10.27.31.128/32"
+              ports:
+                - 5671
+          Endpoints:
+            - labels:
+                - k8s:app: redis
+              ports:
+                - 8080
+            - labels:
+                - k8s:app: vault-agent-injector
+                  k8s:io.kubernetes.pod.namespace: vault
+              ports:
+                - 8080
+          FQDNs:
+            - names:
+                - mysql.gerull.nl
+              ports:
+                - 3306
+            - names:
+                - galaxy.ansible.com
+                - ansible-galaxy.s3.amazonaws.com
+              ports:
+                - 443

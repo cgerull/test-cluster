@@ -1,0 +1,112 @@
+{{- if .Values.networkPolicy.create -}}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ include "testserver.name" . }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "testserver.name" . }}
+  ingress:
+      {{- if or (eq (.Values.environment | lower) "development") (eq (.Values.environment | lower) "test") }}
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: tp-gitlab-runner
+    {{- end }}
+  {{- if .Values.networkPolicy.cilium.ingress }}
+    {{- range .Values.networkPolicy.cilium.ingress.CIDRSets }}
+    - fromCIDRSet:
+        {{- range .cidrs }}
+        - cidr: {{ . }}
+        {{- end }}
+      toPorts:
+        - ports:
+        {{- range .ports }}
+            - port: {{ . | quote }}
+        {{- end }}
+    {{- end }}
+    {{- range .Values.networkPolicy.cilium.ingress.Endpoints }}
+    - fromEndpoints:
+        {{- range .labels }}
+        - matchLabels:
+            app.kubernetes.io/name: {{ . }}
+        {{- end }}
+      {{- if .ports }}
+      toPorts:
+        - ports:
+        {{- range .ports }}
+            - port: {{ . | quote }}
+        {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
+  egress:
+    {{- with .Values.mysql }}
+    {{- if include "isIpAddress" .host }}
+    - toCIDRSet:
+        - cidr: {{ .host }}/32
+    {{- else }}
+    - toFQDNs:
+        - matchName: {{ .host }}
+    {{- end }}
+      toPorts:
+        - ports:
+            - port: {{ .port | quote }}
+    {{- end }}
+    {{- with .Values.rabbitmq }}
+    {{- if include "isIpAddress" .host }}
+    - toCIDRSet:
+        - cidr: {{ .host }}/32
+    {{- else }}
+    - toFQDNs:
+        - matchName: {{ .host }}
+    {{- end }}
+      toPorts:
+        - ports:
+            - port: {{ .port | quote }}
+    {{- end }}
+    {{- range .Values.networkPolicy.cilium.egress.FQDNs }}
+    - toFQDNs:
+        {{- range .names }}
+        - matchName: {{ . }}
+        {{- end }}
+      toPorts:
+        - ports:
+        {{- range .ports }}
+            - port: {{ . | quote }}
+        {{- end }}
+    {{- end }}
+    {{- range .Values.networkPolicy.cilium.egress.CIDRSets }}
+    - toCIDRSet:
+        {{- range .cidrs }}
+        - cidr: {{ . }}
+        {{- end }}
+      toPorts:
+        - ports:
+        {{- range .ports }}
+            - port: {{ . | quote }}
+        {{- end }}
+    {{- end }}
+    {{- range .Values.networkPolicy.cilium.egress.Endpoints }}
+    - toEndpoints:
+        {{- range .labels }}
+        - matchLabels:
+            app.kubernetes.io/name: {{ . }}
+        {{- end }}
+      toPorts:
+        - ports:
+        {{- range .ports }}
+            - port: {{ . | quote }}
+        {{- end }}
+    {{- end }}
+    {{- range .Values.networkPolicy.cilium.egress.Services }}
+    - toServices:
+        - k8sService:
+            serviceName: {{ .name }}
+      toPorts:
+        - ports:
+        {{- range .ports }}
+            - port: {{ . | quote }}
+        {{- end }}
+    {{- end }}
+{{- end }}

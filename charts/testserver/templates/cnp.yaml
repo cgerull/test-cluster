@@ -2,11 +2,11 @@
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: {{ include "testserver.name" . }}
+  name: {{ include "testserver.fullname" . }}
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "testserver.name" . }}
+      app.kubernetes.io/name: {{ include "testserver.fullname" . }}
   ingress:
       {{- if or (eq (.Values.environment | lower) "development") (eq (.Values.environment | lower) "test") }}
     - fromEndpoints:

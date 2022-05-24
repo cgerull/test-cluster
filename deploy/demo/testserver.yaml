@@ -45,7 +45,7 @@ networkPolicy:
         ingress:
           Endpoints:
             - labels:
-                - app.kubernetes.io/name: testserver
+                - testserver
               ports:
                 - 80
 
@@ -57,14 +57,17 @@ networkPolicy:
                 - 5671
           Endpoints:
             - labels:
-                - k8s:app: redis
+                - redis
               ports:
                 - 8080
             - labels:
-                - k8s:app: vault-agent-injector
-                  k8s:io.kubernetes.pod.namespace: vault
+                - vault-agent-injector
               ports:
                 - 8080
+            - labels:
+                - vault
+              ports:
+                - 8200
           FQDNs:
             - names:
                 - mysql.gerull.nl

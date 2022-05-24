@@ -129,7 +129,7 @@ spec:
   ingress:
     - fromEndpoints:
         - matchLabels:
-            app.kubernetes.io/name: map[app.kubernetes.io/name:testserver]
+            app.kubernetes.io/name: testserver
       toPorts:
         - ports:
             - port: "80"
@@ -152,16 +152,22 @@ spec:
             - port: "5671"
     - toEndpoints:
         - matchLabels:
-            app.kubernetes.io/name: map[k8s:app:redis]
+            app.kubernetes.io/name: redis
       toPorts:
         - ports:
             - port: "8080"
     - toEndpoints:
         - matchLabels:
-            app.kubernetes.io/name: map[k8s:app:vault-agent-injector k8s:io.kubernetes.pod.namespace:vault]
+            app.kubernetes.io/name: vault-agent-injector
       toPorts:
         - ports:
             - port: "8080"
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: vault
+      toPorts:
+        - ports:
+            - port: "8200"
 
 ---
 # Source: redis/templates/serviceaccount.yaml

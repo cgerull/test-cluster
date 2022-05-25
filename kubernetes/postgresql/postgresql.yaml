@@ -12,7 +12,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 data:
-  postgres-password: "dFprWWZiMmpXRw=="
+  postgres-password: "cG9zdGdyZXM="
   # We don't auto-generate LDAP password when it's not provided as we do for other passwords
 ---
 # Source: postgresql/templates/primary/svc-headless.yaml
@@ -228,3 +228,4 @@ spec:
         resources:
           requests:
             storage: "8Gi"
+        storageClassName: trident-nfs-n0

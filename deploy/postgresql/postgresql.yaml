@@ -1,0 +1,4 @@
+global:
+  storageClass: "trident-nfs-n0"
+auth:
+  postgresPassword: "postgres"

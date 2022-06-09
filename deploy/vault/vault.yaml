@@ -3,6 +3,12 @@ environment: demo
 server:
   dev:
     enabled: true
+    devRootToken: "root"
+
+  dataStorage:
+    enabled: true
+    # Size of the PVC created
+    size: 2Gi
 
 networkPolicy:
   create: true

@@ -1,13 +1,15 @@
+environment: demo 
+
 server:
   dev:
     enabled: true
 
-  networkPolicy:
-    create: true
+networkPolicy:
+  create: true
 
-    cilium:
-      ingress:
-        CIDRSets:
+  cilium:
+    ingress:
+      CIDRSets:
         - cidrs:
             - "100.65.0.0/16"
           ports:
@@ -25,5 +27,5 @@ server:
             - vault-agent-injector
           ports:
             - "8080"
+    egress: {}
 
-      egress: {}

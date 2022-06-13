@@ -7,21 +7,21 @@ image:
   
 replicaCount: 1
 
-# podAnnotations: 
-#   vault.hashicorp.com/agent-inject: 'true'
-#   vault.hashicorp.com/role: 'testserver'
-#   vault.hashicorp.com/agent-inject-secret-testsecret: 'local/data/testserver/testsecret'
-#   vault.hashicorp.com/agent-inject-template-testsecret: |
-#     {{- with secret "local/data/testserver/testsecret" -}}
-#     {{ .Data.data.secret }}
-#     {{- end -}
+podAnnotations: 
+  vault.hashicorp.com/agent-inject: 'true'
+  vault.hashicorp.com/role: 'testserver'
+  vault.hashicorp.com/agent-inject-secret-testsecret: 'local/data/testserver/secret'
+  vault.hashicorp.com/agent-inject-template-testsecret: |
+    {{- with secret "local/data/testserver/secret" -}}
+    {{ .Data.data.secret }}
+    {{- end -}
 
 
 env:
   - name: SECRET_FILE
     value: "/vault/secrets/testsecret"
   - name: FLASK_ENV
-    value: 'Test'
+    value: 'Demo'
 
 ingress:
   enabled: true

@@ -5,7 +5,7 @@ REGISTRY := https://helm.releases.hashicorp.com
 help:           ## Show this help.
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-install:	## Install vault via helm
+install: helm-repo	## Install vault via helm
 	helm install -n vault vault hashicorp/vault --set "server.dev.enabled=true"
 
 helm-repo:	## Add hashicorp repository

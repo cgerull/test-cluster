@@ -87,4 +87,7 @@ tolerations: []
 
 affinity: {}
 
+networkPolicy:
+  create: false
+
 testEnabled: false

@@ -1,3 +1,8 @@
 server:
   dev:
+    enabled: false
+  affinity: ""
+  ha:
     enabled: true
+    raft: 
+      enabled: true

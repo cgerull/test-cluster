@@ -20,7 +20,7 @@ env:
   - name: FLASK_ENV
     value: 'Dev'
   - name: REDIS_SERVER
-    value: redis/redis.svc
+    value: redis-master
 
 ingress:
   enabled: true

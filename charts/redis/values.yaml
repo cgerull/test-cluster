@@ -1,0 +1,16 @@
+redis:
+  enabled: true
+  
+  architecture: standalone
+  auth:
+    enabled: false
+  replica:
+    replicaCount: 1
+
+
+networkPolicy:
+  create: false
+  # -- Add additional Cilium CNP statements.
+  cilium:
+    ingress: {}
+    egress: {}

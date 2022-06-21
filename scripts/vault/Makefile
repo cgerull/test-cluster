@@ -5,8 +5,14 @@ REGISTRY := https://helm.releases.hashicorp.com
 help:           ## Show this help.
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-install: helm-repo	## Install vault via helm
+install-vault: helm-repo	## Install vault via helm
 	helm install -n vault vault hashicorp/vault --set "server.dev.enabled=true"
+	kubectl exec vault-0 -- vault operator init \
+    		-key-shares=1 \
+    		-key-threshold=1 \
+    		-format=json > cluster-keys.json
+	VAULT_UNSEAL_KEY=$(jq -r ".unseal_keys_b64[]" cluster-keys.json) \
+	&& kubectl exec vault-0 -- vault operator unseal $VAULT_UNSEAL_KEY
 
 helm-repo:	## Add hashicorp repository
 	helm repo add hashicorp https://helm.releases.hashicorp.com

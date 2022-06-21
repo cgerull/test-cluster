@@ -6,10 +6,10 @@ vault kv put local/mysql/config username="root" password="db-secret-password"
 vault kv put local/testserver/secret secret="vaultsecret"
 
 vault policy write testserver - <<EOF
-path "local/mysql/config" {
+path "local/data/mysql/config" {
   capabilities = ["read"]
 }
-path "local/testserver/*" {
+path "local/data/testserver/*" {
   capabilities = ["read"]
 }
 EOF

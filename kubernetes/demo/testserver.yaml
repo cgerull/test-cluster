@@ -1,0 +1,128 @@
+---
+# Source: testserver/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: testserver
+  labels:
+    helm.sh/chart: testserver-0.2.1
+    app.kubernetes.io/name: testserver
+    app.kubernetes.io/instance: testserver
+    app.kubernetes.io/version: "0.9.3"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: testserver/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: testserver
+  labels:
+    helm.sh/chart: testserver-0.2.1
+    app.kubernetes.io/name: testserver
+    app.kubernetes.io/instance: testserver
+    app.kubernetes.io/version: "0.9.3"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: testserver
+    app.kubernetes.io/instance: testserver
+---
+# Source: testserver/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: testserver
+  labels:
+    helm.sh/chart: testserver-0.2.1
+    app.kubernetes.io/name: testserver
+    app.kubernetes.io/instance: testserver
+    app.kubernetes.io/version: "0.9.3"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: testserver
+      app.kubernetes.io/instance: testserver
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-secret-testsecret: local/data/testserver/secret
+        vault.hashicorp.com/agent-inject-template-testsecret: |
+          {{- with secret "local/data/testserver/secret" -}}
+          {{ .Data.data.secret }}
+          {{- end -}
+        vault.hashicorp.com/role: testserver
+      labels:
+        app.kubernetes.io/name: testserver
+        app.kubernetes.io/instance: testserver
+    spec:
+      serviceAccountName: testserver
+      securityContext:
+        {}
+      containers:
+        - name: testserver
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+          image: "cgerull/testserver:0.9.6"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: SECRET_FILE
+              value: /vault/secrets/testsecret
+            - name: FLASK_ENV
+              value: Demo
+            - name: REDIS_SERVER
+              value: redis
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 48Mi
+---
+# Source: testserver/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: testserver
+  labels:
+    helm.sh/chart: testserver-0.2.1
+    app.kubernetes.io/name: testserver
+    app.kubernetes.io/instance: testserver
+    app.kubernetes.io/version: "0.9.3"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+    - host: "testserver-acc.solvinity.net"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: testserver
+                port:
+                  number: 80

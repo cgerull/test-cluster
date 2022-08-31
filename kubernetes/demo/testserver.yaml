@@ -52,14 +52,6 @@ spec:
       app.kubernetes.io/instance: testserver
   template:
     metadata:
-      annotations:
-        vault.hashicorp.com/agent-inject: "true"
-        vault.hashicorp.com/agent-inject-secret-testsecret: local/data/testserver/secret
-        vault.hashicorp.com/agent-inject-template-testsecret: |
-          {{- with secret "local/data/testserver/secret" -}}
-          {{ .Data.data.secret }}
-          {{- end -}
-        vault.hashicorp.com/role: testserver
       labels:
         app.kubernetes.io/name: testserver
         app.kubernetes.io/instance: testserver

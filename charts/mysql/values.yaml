@@ -1,0 +1,59 @@
+# Default values for mysql.
+
+mysql:
+  enabled: true
+
+  auth: {}
+    # -- Specify the secret to use for database credentials
+    # existingSecret: mysql
+
+  image:
+    tag: 5.7.35-debian-10-r33
+
+  networkPolicy:
+    create: false
+
+    # -- Add additional Cilium CNP statements.
+    cilium:
+      ingress: {}
+
+  primary:
+   configuration: |-
+     [mysqld]
+     default_authentication_plugin=mysql_native_password
+     skip-name-resolve
+     explicit_defaults_for_timestamp
+     basedir=/opt/bitnami/mysql
+     plugin_dir=/opt/bitnami/mysql/lib/plugin
+     port=3306
+     socket=/opt/bitnami/mysql/tmp/mysql.sock
+     datadir=/bitnami/mysql/data
+     tmpdir=/opt/bitnami/mysql/tmp
+     max_allowed_packet=16M
+     bind-address=0.0.0.0
+     pid-file=/opt/bitnami/mysql/tmp/mysqld.pid
+     log-error=/opt/bitnami/mysql/logs/mysqld.log
+     character-set-server=UTF8
+     collation-server=utf8_general_ci
+     max_connections=1000
+
+     [client]
+     port=3306
+     socket=/opt/bitnami/mysql/tmp/mysql.sock
+     default-character-set=UTF8
+     plugin_dir=/opt/bitnami/mysql/lib/plugin
+
+     [manager]
+     port=3306
+     socket=/opt/bitnami/mysql/tmp/mysql.sock
+     pid-file=/opt/bitnami/mysql/tmp/mysqld.pid
+
+  # -- List of AWS Secret Manager secerts to load
+  secretManagerSecrets: []
+
+
+tunneller:
+  enabled: false
+
+  networkPolicy:
+    create: false

@@ -64,6 +64,19 @@ env:
   - name: REDIS_PASSWORD
     value: None
 
+# -- Probes
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 5
+
 # -- Minimun values, increase in downstream configs.
 resources:
   limits:

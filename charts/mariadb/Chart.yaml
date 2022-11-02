@@ -1,0 +1,13 @@
+apiVersion: v2
+name: mariadb
+description: An umbrella chart for bitnami MariaDB
+
+type: application
+version: 0.1.0
+
+dependencies:
+  - name: mariadb
+    repository: https://charts.bitnami.com/bitnami
+    version: 11.1.3
+
+

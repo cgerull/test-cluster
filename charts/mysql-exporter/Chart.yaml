@@ -1,0 +1,10 @@
+apiVersion: v2
+name: prometheus-mysql-exporter
+description: Umbrella chart for prometheus mysql exporter
+type: application
+version: 0.1.0
+dependencies:
+  - name: prometheus-mysql-exporter
+    repository: https://prometheus-community.github.io/helm-charts
+    version: ~1.9.1
+    condition: mysql.enabled

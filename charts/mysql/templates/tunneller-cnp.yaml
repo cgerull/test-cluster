@@ -1,0 +1,20 @@
+{{- if .Values.tunneller.enabled }}
+{{- if .Values.tunneller.networkPolicy.create }}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: mysql
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: tunneller
+  ingress:
+    - {}
+  egress:
+    - toFQDNs:
+        - matchName: {{ .Values.tunneller.tunnel.host }}
+      toPorts:
+        - ports:
+            - port: {{ .Values.tunneller.tunnel.port | quote }}
+{{- end -}}
+{{- end -}}

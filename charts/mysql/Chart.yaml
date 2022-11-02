@@ -1,0 +1,16 @@
+apiVersion: v2
+name: mysql
+description: An umbrella chart for bitnami MySQL
+
+type: application
+version: 0.1.0
+dependencies:
+  - name: mysql
+    repository: https://charts.bitnami.com/bitnami
+    version: 9.2.3
+    condition: mysql.enabled
+  - name: socat-tunneller
+    repository: https://isotoma.github.io/charts
+    version: 0.1.5
+    condition: tunnel.enabled
+    alias: tunneller

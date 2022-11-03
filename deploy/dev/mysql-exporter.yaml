@@ -1,0 +1,16 @@
+# mysql connection params which build the DATA_SOURCE_NAME env var of the docker container
+prometheus-mysql-exporter:
+  mysql:
+    db: "testserver"
+    host: "mariadb"
+    param: ""
+    pass: "StrongPassword"
+    port: 3306
+    protocol: ""
+    user: "exporter"
+    # secret with full DATA_SOURCE_NAME env var as stringdata
+    existingSecret: ""
+    # secret only containing the password
+    existingPasswordSecret:
+      name: ""
+      key: ""

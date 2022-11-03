@@ -1,0 +1,4 @@
+mariadb:
+  auth:
+    rootPassword: P@55W0rd
+    database: testserver

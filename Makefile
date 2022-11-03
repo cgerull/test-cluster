@@ -24,7 +24,7 @@ helm-repo:	## Add hashicorp repository
 clean:		## Clean all artefacts
 	helm uninstall -n vault vault
 
-all: helm-repo install    ## Run all commands
+all: helm-repo install-vault unseal-vault    ## Run all commands
 
 
 

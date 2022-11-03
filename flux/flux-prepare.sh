@@ -94,3 +94,15 @@ flux create kustomization testserver \
   --path="./kubernetes/dev-local/" \
   --prune=true \
   --interval=5m
+
+#
+flux create source git testcluster \
+    --url=https://github.com/cgerull/deploy-test-cluster.git \
+    --branch=main
+#
+flux create kustomization mariadb \
+  --target-namespace=mariadb \
+  --source=testclusterr \
+  --path="./kubernetes/dev-local/" \
+  --prune=true \
+  --interval=5m
